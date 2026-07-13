@@ -4,8 +4,6 @@ This Next.js application is the clickable product shell for Release 0. It
 demonstrates the intended MLOps workspace with browser-local fixtures before a
 backend or technical core exists.
 
-The active scope is defined in [`../docs/CURRENT_RELEASE.md`](../docs/CURRENT_RELEASE.md).
-
 ## Run locally
 
 Requires [Bun](https://bun.sh/).
