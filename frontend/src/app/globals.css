@@ -1,26 +1,149 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sensor: var(--sensor);
+  --color-sensor-soft: var(--sensor-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --font-sans: var(--font-public-sans);
+  --font-heading: var(--font-sora);
+  --font-mono: var(--font-ibm-plex-mono);
+  --radius-sm: calc(var(--radius) * 0.66);
+  --radius-md: calc(var(--radius) * 0.84);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.7);
+  --radius-3xl: calc(var(--radius) * 2.1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #f4f7f6;
+  --foreground: #17201f;
+  --card: #ffffff;
+  --card-foreground: #17201f;
+  --popover: #ffffff;
+  --popover-foreground: #17201f;
+  --primary: #2359c4;
+  --primary-foreground: #ffffff;
+  --secondary: #e8eeec;
+  --secondary-foreground: #263331;
+  --muted: #edf2f1;
+  --muted-foreground: #64716f;
+  --accent: #e8effd;
+  --accent-foreground: #1c4597;
+  --destructive: #c6403b;
+  --border: #d9e1df;
+  --input: #cfd9d7;
+  --ring: #2359c4;
+  --sensor: #148477;
+  --sensor-soft: #e0f3ef;
+  --warning: #a66212;
+  --warning-soft: #fff0d5;
+  --chart-1: #2359c4;
+  --chart-2: #148477;
+  --chart-3: #58a8a0;
+  --chart-4: #e5a438;
+  --chart-5: #71807d;
+  --radius: 0.75rem;
+  --sidebar: #edf2f1;
+  --sidebar-foreground: #263331;
+  --sidebar-primary: #2359c4;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #ffffff;
+  --sidebar-accent-foreground: #17201f;
+  --sidebar-border: #d5dedc;
+  --sidebar-ring: #2359c4;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply bg-background font-sans text-foreground;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-svh bg-background text-foreground antialiased;
+    font-feature-settings: "ss01" 1, "cv02" 1, "cv03" 1;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
+  }
+
+  ::selection {
+    background: #cbdafe;
+    color: #17201f;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .font-heading {
+    font-family: var(--font-sora), sans-serif;
+  }
+
+  .font-data {
+    font-family: var(--font-ibm-plex-mono), monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .lab-grid {
+    background-image:
+      linear-gradient(to right, rgb(23 32 31 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(23 32 31 / 0.035) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

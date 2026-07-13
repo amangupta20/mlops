@@ -14,8 +14,12 @@ implementation and demonstration.
 
 **Phase 0 — Product shell**
 
-The repository currently contains a Next.js frontend scaffold using Bun.
-The backend and MLOps functionality have not been implemented yet.
+The repository currently contains the Release 0 clickable mock frontend. It
+demonstrates the intended product flow with browser-local fixture data; no
+backend or MLOps functionality has been implemented.
+
+See [`docs/CURRENT_RELEASE.md`](docs/CURRENT_RELEASE.md) for active scope and
+[`frontend/README.md`](frontend/README.md) for mock behavior and routes.
 
 ## Development
 
@@ -29,3 +33,4 @@ The backend and MLOps functionality have not been implemented yet.
 cd frontend
 bun install
 bun dev
+```
