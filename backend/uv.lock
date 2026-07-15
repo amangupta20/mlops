@@ -50,6 +50,7 @@ dependencies = [
     { name = "opencv-python-headless" },
     { name = "pillow" },
     { name = "python-multipart" },
+    { name = "ruff" },
     { name = "ultralytics" },
     { name = "uvicorn" },
 ]
@@ -67,6 +68,7 @@ requires-dist = [
     { name = "opencv-python-headless", specifier = ">=5.0.0.93" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "python-multipart", specifier = ">=0.0.32" },
+    { name = "ruff", specifier = ">=0.15.21" },
     { name = "ultralytics", specifier = ">=8.4.93" },
     { name = "uvicorn", specifier = ">=0.51.0" },
 ]
