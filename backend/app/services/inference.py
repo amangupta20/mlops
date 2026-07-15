@@ -7,7 +7,7 @@ INPUT_IMAGE = Path("storage/inputs/test.jpg")
 OUTPUT_IMAGE = Path("storage/outputs/test-result.jpg")
 
 
-def main() -> None:
+def infer() -> None:
     if not INPUT_IMAGE.is_file():
         raise FileNotFoundError(f"Input image not found: {INPUT_IMAGE}")
 
@@ -26,5 +26,3 @@ def main() -> None:
     print(f"Saved annotated image to {OUTPUT_IMAGE}")
 
 
-if __name__ == "__main__":
-    main()
