@@ -11,11 +11,13 @@ This repository currently contains two independently runnable applications:
 - A Release 0 Next.js product shell that demonstrates the intended MLOps
   workflows with browser-local mock data.
 - A FastAPI inference backend that loads three local Ultralytics YOLO models,
-  accepts JPEG or PNG uploads, and returns annotated JPEG images.
+  accepts JPEG or PNG uploads, and returns annotated JPEG images with
+  structured detections.
 
-The frontend is not connected to the backend yet. Dataset management, real
-training, experiment tracking, model registration, and orchestration remain
-simulated frontend workflows or future scope.
+Only the frontend inference screen is connected to the backend. Dataset
+management, real training, experiment tracking, model registration,
+orchestration, and system status remain simulated frontend workflows or future
+scope.
 
 ## Repository layout
 
@@ -78,10 +80,9 @@ bun install
 bun dev
 ```
 
-Open `http://localhost:3000`. The inference screen currently simulates its
-result in the browser and does not send the selected image to the FastAPI API.
-See the [frontend README](frontend/README.md) for available routes and mock
-behavior.
+Open `http://localhost:3000`. The inference screen sends the selected image to
+the FastAPI API through the frontend's `/infer` proxy. See the
+[frontend README](frontend/README.md) for available routes and behavior.
 
 ## Development checks
 
@@ -100,9 +101,6 @@ bun run test -- --run
 bun lint
 bun run build
 ```
-
-The backend currently has no committed test suite, so `pytest` will not run
-project tests until they are added.
 
 ## Implemented backend API
 

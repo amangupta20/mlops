@@ -1,18 +1,28 @@
-import { Timer } from "lucide-react";
+import { ScanSearch, Timer } from "lucide-react";
 
-import { MOCK_DETECTIONS } from "@/lib/mock-data";
+export type Detection = {
+  class_id: number;
+  label: string;
+  confidence: number;
+  box: {
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  };
+};
 
-const timing = [
-  ["Preprocess", "3.2 ms"],
-  ["Inference", "21.8 ms"],
-  ["Postprocess", "3.6 ms"],
-] as const;
+type DetectionRailProps = {
+  detections: Detection[];
+  processingTime: string;
+  modelUsed: string;
+};
 
-export function DetectionRail({ confidence }: { confidence: number }) {
-  const detections = MOCK_DETECTIONS.filter(
-    (detection) => detection.confidence * 100 >= confidence,
-  );
-
+export function DetectionRail({
+  detections,
+  processingTime,
+  modelUsed,
+}: DetectionRailProps) {
   return (
     <aside className="flex min-h-0 flex-col border-t bg-card lg:border-t-0 lg:border-l">
       <div className="flex items-center justify-between border-b px-4 py-3">
@@ -22,49 +32,50 @@ export function DetectionRail({ confidence }: { confidence: number }) {
             {detections.length} {detections.length === 1 ? "detection" : "detections"}
           </p>
         </div>
-        <span className="font-data text-[0.62rem] text-muted-foreground">
-          conf ≥ {(confidence / 100).toFixed(2)}
-        </span>
       </div>
 
-      <div className="divide-y">
-        {detections.map((detection) => (
-          <div
-            key={detection.id}
-            className="flex items-center justify-between gap-3 px-4 py-3"
-          >
-            <div className="flex min-w-0 items-center gap-2.5">
-              <span
-                className="size-2 rounded-sm"
-                style={{ backgroundColor: detection.color }}
-              />
-              <span className="truncate text-sm font-medium">
-                {detection.label}
+      {detections.length > 0 ? (
+        <div className="min-h-0 flex-1 divide-y overflow-y-auto">
+          {detections.map((detection, index) => (
+            <div
+              key={`${detection.class_id}-${detection.box.x1}-${detection.box.y1}-${index}`}
+              className="flex items-center justify-between gap-3 px-4 py-3"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <ScanSearch
+                  className="size-3.5 shrink-0 text-primary"
+                  aria-hidden="true"
+                />
+                <span className="truncate text-sm font-medium">
+                  {detection.label}
+                </span>
+              </div>
+              <span className="font-data text-xs font-semibold">
+                {Math.round(detection.confidence * 100)}%
               </span>
             </div>
-            <span className="font-data text-xs font-semibold">
-              {Math.round(detection.confidence * 100)}%
-            </span>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid flex-1 place-items-center px-6 text-center text-xs leading-5 text-muted-foreground">
+          No objects met the confidence threshold.
+        </div>
+      )}
 
       <div className="mt-auto border-t bg-muted/45 p-4">
         <div className="mb-3 flex items-center gap-2 text-xs font-medium">
           <Timer className="size-3.5 text-primary" aria-hidden="true" />
-          Mock timing
+          Response metadata
         </div>
         <dl className="grid gap-2">
-          {timing.map(([label, value]) => (
-            <div key={label} className="flex items-center justify-between gap-4">
-              <dt className="text-xs text-muted-foreground">{label}</dt>
-              <dd className="font-data text-xs">{value}</dd>
-            </div>
-          ))}
-          <div className="mt-1 flex items-center justify-between gap-4 border-t pt-2">
-            <dt className="text-xs font-medium">Total</dt>
+          <div className="flex items-center justify-between gap-4">
+            <dt className="text-xs text-muted-foreground">Model used</dt>
+            <dd className="font-data text-xs font-semibold">{modelUsed}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <dt className="text-xs text-muted-foreground">Processing time</dt>
             <dd className="font-data text-xs font-semibold text-primary">
-              28.6 ms
+              {processingTime}
             </dd>
           </div>
         </dl>

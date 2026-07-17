@@ -1,26 +1,21 @@
 import { ImageIcon, LoaderCircle, ScanLine } from "lucide-react";
 import Image from "next/image";
 
-import { MOCK_DETECTIONS } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
 type InspectionViewportProps = {
   imageUrl: string | null;
   imageName: string | null;
   phase: "idle" | "processing" | "result";
-  confidence: number;
+  isResult: boolean;
 };
 
 export function InspectionViewport({
   imageUrl,
   imageName,
   phase,
-  confidence,
+  isResult,
 }: InspectionViewportProps) {
-  const detections = MOCK_DETECTIONS.filter(
-    (detection) => detection.confidence * 100 >= confidence,
-  );
-
   return (
     <div className="relative min-h-[25rem] overflow-hidden bg-[#15201f] lg:min-h-[38rem]">
       <div className="lab-grid absolute inset-0 opacity-25" />
@@ -28,7 +23,7 @@ export function InspectionViewport({
       {imageUrl ? (
         <Image
           src={imageUrl}
-          alt={`Preview of ${imageName ?? "selected image"}`}
+          alt={`${isResult ? "Inference result" : "Preview"} for ${imageName ?? "selected image"}`}
           fill
           unoptimized
           className="object-contain"
@@ -60,35 +55,11 @@ export function InspectionViewport({
               Processing image
             </p>
             <p className="font-data mt-1 text-[0.62rem] tracking-[0.12em] text-white/55 uppercase">
-              Simulating model pass
+              Running model inference
             </p>
           </div>
         </div>
       ) : null}
-
-      {phase === "result"
-        ? detections.map((detection) => (
-            <div
-              key={detection.id}
-              className="absolute border-2 shadow-[0_0_0_1px_rgb(0_0_0/0.32)]"
-              style={{
-                borderColor: detection.color,
-                left: `${detection.box.left}%`,
-                top: `${detection.box.top}%`,
-                width: `${detection.box.width}%`,
-                height: `${detection.box.height}%`,
-              }}
-            >
-              <span
-                className="font-data absolute -top-6 left-[-2px] flex h-6 items-center gap-1 px-1.5 text-[0.6rem] font-semibold text-[#101918]"
-                style={{ backgroundColor: detection.color }}
-              >
-                {detection.label}
-                <span>{Math.round(detection.confidence * 100)}</span>
-              </span>
-            </div>
-          ))
-        : null}
 
       <ViewportCorner className="top-4 left-4 border-t border-l" />
       <ViewportCorner className="top-4 right-4 border-t border-r" />
@@ -98,7 +69,7 @@ export function InspectionViewport({
       <div className="absolute top-4 left-1/2 flex -translate-x-1/2 items-center gap-2 rounded-full border border-white/10 bg-black/35 px-3 py-1.5 text-white backdrop-blur-md">
         <ScanLine className="size-3 text-[#65d6c9]" aria-hidden="true" />
         <span className="font-data text-[0.58rem] tracking-[0.12em] uppercase">
-          {phase === "result" ? "Inspection complete" : "Viewport ready"}
+          {phase === "result" ? "Server result" : "Viewport ready"}
         </span>
       </div>
     </div>

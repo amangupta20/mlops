@@ -14,7 +14,7 @@ export default function InferencePage() {
       <PageHeader
         eyebrow="Vision workspace"
         title="Inspect an image."
-        description="Preview the first product workflow with a local file and a fully simulated detection result. Nothing leaves this browser."
+        description="Send one image to the inference API and inspect its annotated JPEG result."
         action={<StatusBadge status="ready" className="h-7 px-3" />}
       />
       <div className="mt-8">

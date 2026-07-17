@@ -83,8 +83,7 @@ Example using the default model and confidence:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/infer \
-  -F "image=@example.jpg" \
-  --output annotated.jpg
+  -F "image=@example.jpg"
 ```
 
 Example selecting a model and confidence threshold:
@@ -93,11 +92,31 @@ Example selecting a model and confidence threshold:
 curl -X POST http://127.0.0.1:8000/infer \
   -F "image=@example.png" \
   -F "model_name=yolo26s" \
-  -F "confidence=0.4" \
-  --output annotated.jpg
+  -F "confidence=0.4"
 ```
 
-A successful response has the media type `image/jpeg` and includes:
+A successful response has the media type `application/json`. The `image`
+object contains the annotated JPEG as base64, while `detections` contains real
+model results with normalized `xyxy` coordinates:
+
+```json
+{
+  "image": {
+    "content_type": "image/jpeg",
+    "base64": "/9j/4AAQSk..."
+  },
+  "detections": [
+    {
+      "class_id": 0,
+      "label": "person",
+      "confidence": 0.9432,
+      "box": { "x1": 0.12, "y1": 0.08, "x2": 0.47, "y2": 0.9 }
+    }
+  ]
+}
+```
+
+Coordinates range from `0.0` to `1.0`. The response also includes:
 
 | Header | Description |
 | --- | --- |

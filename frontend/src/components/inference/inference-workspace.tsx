@@ -1,9 +1,12 @@
 "use client";
 
-import { type ChangeEvent, useEffect, useRef, useState } from "react";
+import { type ChangeEvent, useEffect, useState } from "react";
 import { FileImage, Play, RotateCcw, Upload } from "lucide-react";
 
-import { DetectionRail } from "@/components/inference/detection-rail";
+import {
+  DetectionRail,
+  type Detection,
+} from "@/components/inference/detection-rail";
 import { InspectionViewport } from "@/components/inference/inspection-viewport";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,57 +26,118 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 
-const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png"]);
+
+type InferenceResponse = {
+  image: {
+    content_type: string;
+    base64: string;
+  };
+  detections: Detection[];
+};
+
+type InferenceMetadata = {
+  processingTime: string;
+  modelUsed: string;
+};
 
 export function InferenceWorkspace() {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [imageName, setImageName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<"idle" | "processing" | "result">(
     "idle",
   );
+  const [modelName, setModelName] = useState("yolo26n");
   const [confidence, setConfidence] = useState(42);
+  const [detections, setDetections] = useState<Detection[]>([]);
+  const [metadata, setMetadata] = useState<InferenceMetadata | null>(null);
   const [inputKey, setInputKey] = useState(0);
-  const timerRef = useRef<number | null>(null);
 
-  useEffect(
-    () => () => {
-      if (imageUrl) URL.revokeObjectURL(imageUrl);
-      if (timerRef.current) window.clearTimeout(timerRef.current);
-    },
-    [imageUrl],
-  );
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
+
+  useEffect(() => () => {
+    if (resultUrl) URL.revokeObjectURL(resultUrl);
+  }, [resultUrl]);
 
   function chooseImage(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     if (!ACCEPTED_TYPES.has(file.type)) {
-      setError("Choose a JPEG, PNG, or WebP image.");
+      setError("Choose a JPEG or PNG image.");
       event.target.value = "";
       return;
     }
 
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-    setImageUrl(URL.createObjectURL(file));
+    setImageFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+    setResultUrl(null);
     setImageName(file.name);
     setError(null);
+    setDetections([]);
+    setMetadata(null);
     setPhase("idle");
   }
 
-  function runInference() {
-    if (!imageUrl) return;
+  async function runInference() {
+    if (!imageFile) return;
+
     setPhase("processing");
-    timerRef.current = window.setTimeout(() => {
+    setError(null);
+    setResultUrl(null);
+    setDetections([]);
+    setMetadata(null);
+
+    const formData = new FormData();
+    formData.append("image", imageFile);
+    formData.append("model_name", modelName);
+    formData.append("confidence", (confidence / 100).toString());
+
+    try {
+      const response = await fetch("/infer", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response));
+      }
+
+      const result = (await response.json()) as InferenceResponse;
+      const resultBlob = decodeBase64Image(
+        result.image.base64,
+        result.image.content_type,
+      );
+      setResultUrl(URL.createObjectURL(resultBlob));
+      setDetections(result.detections);
+      setMetadata({
+        processingTime:
+          response.headers.get("X-Processing-Time") ?? "Not provided",
+        modelUsed: response.headers.get("X-Model-Used") ?? "Not provided",
+      });
       setPhase("result");
-    }, 1_200);
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "Inference request failed.",
+      );
+      setPhase("idle");
+    }
   }
 
   function reset() {
-    if (imageUrl) URL.revokeObjectURL(imageUrl);
-    setImageUrl(null);
+    setImageFile(null);
+    setPreviewUrl(null);
+    setResultUrl(null);
     setImageName(null);
     setError(null);
+    setDetections([]);
+    setMetadata(null);
     setPhase("idle");
     setInputKey((current) => current + 1);
   }
@@ -85,7 +149,7 @@ export function InferenceWorkspace() {
           <CardHeader>
             <CardTitle>Input image</CardTitle>
             <CardDescription>
-              The file stays in this browser preview.
+              JPEG or PNG, sent only when you run inference.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -104,7 +168,7 @@ export function InferenceWorkspace() {
                 {imageName ?? "Choose an image"}
               </span>
               <span className="mt-1 text-xs text-muted-foreground">
-                JPEG, PNG or WebP
+                JPEG or PNG
               </span>
             </label>
             <input
@@ -112,8 +176,9 @@ export function InferenceWorkspace() {
               id="inference-image"
               aria-label="Choose image"
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png"
               className="sr-only"
+              disabled={phase === "processing"}
               onChange={chooseImage}
             />
             {error ? (
@@ -128,20 +193,20 @@ export function InferenceWorkspace() {
           <CardHeader>
             <CardTitle>Model settings</CardTitle>
             <CardDescription>
-              Presentation values for this mock run.
+              Values sent to the inference API.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="model-select">Model</Label>
-              <Select defaultValue="yolo11n">
+              <Select value={modelName} onValueChange={setModelName}>
                 <SelectTrigger id="model-select" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yolo11n">YOLO11n · built-in</SelectItem>
-                  <SelectItem value="traffic">Urban traffic · v0.3.1</SelectItem>
-                  <SelectItem value="warehouse">Warehouse safety · v0.2.0</SelectItem>
+                  <SelectItem value="yolo26n">YOLO26n</SelectItem>
+                  <SelectItem value="yolo26s">YOLO26s</SelectItem>
+                  <SelectItem value="yolo26m">YOLO26m</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -169,7 +234,7 @@ export function InferenceWorkspace() {
                 size="lg"
                 className="h-10"
                 onClick={runInference}
-                disabled={!imageUrl || phase === "processing"}
+                disabled={!imageFile || phase === "processing"}
               >
                 <Play data-icon="inline-start" />
                 Run inference
@@ -178,7 +243,7 @@ export function InferenceWorkspace() {
                 variant="outline"
                 size="icon-lg"
                 onClick={reset}
-                disabled={!imageUrl}
+                disabled={!imageFile || phase === "processing"}
                 aria-label="Clear image"
               >
                 <RotateCcw aria-hidden="true" />
@@ -191,13 +256,17 @@ export function InferenceWorkspace() {
       <div className="overflow-hidden rounded-xl border bg-card shadow-[0_24px_70px_-52px_rgb(23_32_31/0.75)]">
         <div className="grid min-h-full lg:grid-cols-[minmax(0,1fr)_14rem]">
           <InspectionViewport
-            imageUrl={imageUrl}
+            imageUrl={resultUrl ?? previewUrl}
             imageName={imageName}
             phase={phase}
-            confidence={confidence}
+            isResult={Boolean(resultUrl)}
           />
-          {phase === "result" ? (
-            <DetectionRail confidence={confidence} />
+          {phase === "result" && metadata ? (
+            <DetectionRail
+              detections={detections}
+              processingTime={metadata.processingTime}
+              modelUsed={metadata.modelUsed}
+            />
           ) : (
             <aside className="hidden border-l bg-card lg:flex lg:flex-col">
               <div className="border-b px-4 py-3">
@@ -207,7 +276,7 @@ export function InferenceWorkspace() {
                 </p>
               </div>
               <div className="grid flex-1 place-items-center px-6 text-center text-xs leading-5 text-muted-foreground">
-                Detections and timing will appear here after the mock run.
+                The annotated image and response metadata will appear here.
               </div>
             </aside>
           )}
@@ -215,4 +284,26 @@ export function InferenceWorkspace() {
       </div>
     </div>
   );
+}
+
+function decodeBase64Image(base64: string, contentType: string) {
+  const binary = window.atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type: contentType });
+}
+
+async function readErrorMessage(response: Response) {
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    if (typeof body.detail === "string") return body.detail;
+  } catch {
+    // Fall through to the status-based message for non-JSON errors.
+  }
+
+  return `Inference failed with status ${response.status}.`;
 }

@@ -1,11 +1,14 @@
-from app.services import inference
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Request
-from fastapi.responses import Response
-from typing import Annotated
-from app.domain.model_ids import ModelName
+import asyncio
+import base64
 from contextlib import asynccontextmanager
 from time import perf_counter
-import asyncio
+from typing import Annotated
+
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
+
+from app.domain.model_ids import ModelName
+from app.services import inference
 
 
 @asynccontextmanager
@@ -52,15 +55,20 @@ async def run_inference(
     image_data = await image.read()
     try:
         async with request.app.state.inference_slots:
-            result_bytes = await asyncio.to_thread(
+            result_bytes, detections = await asyncio.to_thread(
                 inference.infer, image_data, model, confidence
             )
     except inference.InvalidImageError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     elapsed_time = (perf_counter() - start_time) * 1000
-    return Response(
-        content=result_bytes,
-        media_type="image/jpeg",
+    return JSONResponse(
+        content={
+            "image": {
+                "content_type": "image/jpeg",
+                "base64": base64.b64encode(result_bytes).decode("ascii"),
+            },
+            "detections": detections,
+        },
         headers={
             "X-Processing-Time": f"{elapsed_time:.2f} ms",
             "X-Model-Used": model_name.value,

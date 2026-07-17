@@ -15,6 +15,14 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+The inference screen proxies only `POST /infer` to
+`http://127.0.0.1:8000/infer` by default. Set `INFERENCE_BACKEND_URL` before
+starting or building the frontend when FastAPI is hosted elsewhere:
+
+```bash
+INFERENCE_BACKEND_URL=http://backend:8000 bun dev
+```
+
 ## Checks
 
 ```bash
@@ -38,10 +46,11 @@ bun run build
 | `/models` | Model registry |
 | `/system` | System status |
 
-## Mock behavior
+## Behavior
 
-- A local JPEG, PNG, or WebP can be previewed and submitted for simulated
-  inference. The image is not uploaded or stored.
+- A local JPEG or PNG can be submitted to `POST /infer`. The annotated JPEG,
+  real detection labels, confidence scores, model name, and processing time are
+  displayed from the API response.
 - Training progresses automatically from queued to completed in about 24
   seconds.
 - Completing training adds one candidate model to the registry.
@@ -51,7 +60,7 @@ bun run build
 
 ## Boundaries
 
-This frontend does not perform inference, ingest or validate datasets, train a
-model, call health endpoints, define backend contracts, or persist server data.
-All domain records, metrics, logs, artifacts, and system values are illustrative
+Only the inference screen is connected to a backend. The frontend does not
+connect dataset, training, run, model-registry, or system-status screens, call
+health endpoints, or persist server data. Those workflows remain illustrative
 Release 0 fixtures.
