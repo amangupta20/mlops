@@ -2,7 +2,15 @@ import io
 from ultralytics import YOLO
 import cv2
 from app.domain.model_ids import ModelName
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
+
+class InvalidImageError(ValueError):
+    """Raised when the uploaded bytes are not a valid image."""
+
+
+class ImageEncodingError(RuntimeError):
+    """Raised when the inference result cannot be encoded."""
+
 
 
 def load_model():
@@ -14,23 +22,27 @@ def load_model():
     return models
 def infer(raw_image: bytes,model: YOLO,confidence: float) -> bytes:
     if not raw_image:
-        raise ValueError("No image provided for inference.")
+        raise InvalidImageError("No image provided for inference.")
 
     try:
         image=Image.open(io.BytesIO(raw_image)).convert("RGB")
-    except Exception:
-        raise ValueError("Invalid image data provided for inference.")
+    except (UnidentifiedImageError, OSError, ValueError) as exc:
+            raise InvalidImageError(
+                "The uploaded file is not a valid image."
+            ) from exc
     results = model.predict(
         source=image,
         conf=confidence,
     )
 
     result = results[0]
+    if not results:
+            raise RuntimeError("The model returned no inference result.")
 
     print("Image annotated")
     annotated_image = result.plot()
     success,encoded_image = cv2.imencode(".jpg", annotated_image)
     if not success:
-        raise ValueError("Failed to encode the annotated image.")
+        raise ImageEncodingError("Failed to encode the inference result.")
     image_bytes = encoded_image.tobytes()
     return image_bytes

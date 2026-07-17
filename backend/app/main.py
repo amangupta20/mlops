@@ -46,8 +46,11 @@ async def run_inference(
         raise HTTPException(status_code=400, detail=f"Model {model_name} not found.")
 
     image_data = await image.read()
-    async with request.app.state.inference_slots:
-        result_bytes = await asyncio.to_thread(inference.infer, image_data, model, confidence)
+    try:
+        async with request.app.state.inference_slots:
+            result_bytes = await asyncio.to_thread(inference.infer, image_data, model, confidence)
+    except inference.InvalidImageError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     elapsed_time = (perf_counter() - start_time)*1000
     return Response(content=result_bytes, media_type="image/jpeg", headers={"X-Processing-Time": f"{elapsed_time:.2f} ms",  "X-Model-Used": model_name.value})
 
