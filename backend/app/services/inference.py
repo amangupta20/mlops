@@ -1,7 +1,7 @@
 import io
 from ultralytics import YOLO
 import cv2
-from domain.model_ids import ModelName
+from app.domain.model_ids import ModelName
 from PIL import Image
 
 
@@ -12,8 +12,7 @@ def load_model():
         print(f"Loading model: {model_name.value}")
         models[model_name] = YOLO(model_path)
     return models
-
-async def infer(raw_image: bytes,model: YOLO,confidence: float) -> bytes:
+def infer(raw_image: bytes,model: YOLO,confidence: float) -> bytes:
     if not raw_image:
         raise ValueError("No image provided for inference.")
 
@@ -21,7 +20,7 @@ async def infer(raw_image: bytes,model: YOLO,confidence: float) -> bytes:
         image=Image.open(io.BytesIO(raw_image)).convert("RGB")
     except Exception:
         raise ValueError("Invalid image data provided for inference.")
-    results = await model.predict(
+    results = model.predict(
         source=image,
         conf=confidence,
     )

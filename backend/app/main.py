@@ -1,10 +1,11 @@
-import services.inference as inference
+from app.services import inference
 from fastapi import FastAPI,UploadFile,File,HTTPException,Form,Request
 from fastapi.responses import Response
 from typing import Annotated
-from domain.model_ids import ModelName
+from app.domain.model_ids import ModelName
 from contextlib import asynccontextmanager
 from time import perf_counter
+import asyncio
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.yolo_models = inference.load_model()
@@ -42,7 +43,7 @@ async def run_inference(
     model=app.state.yolo_models.get(model_name)
     if model is None:
         raise HTTPException(status_code=400, detail=f"Model {model_name} not found.")
-    
+
     image_data = await image.read()
     result_bytes=await inference.infer(image_data, model, confidence)
     elapsed_time = (perf_counter() - start_time)*1000
@@ -51,4 +52,3 @@ async def run_inference(
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
-
