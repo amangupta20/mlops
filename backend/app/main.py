@@ -9,6 +9,7 @@ import asyncio
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.yolo_models = inference.load_model()
+    app.state.inference_slots = asyncio.Semaphore(5)
     print("Models loaded successfully.")
     yield
     app.state.yolo_models.clear()
@@ -45,7 +46,8 @@ async def run_inference(
         raise HTTPException(status_code=400, detail=f"Model {model_name} not found.")
 
     image_data = await image.read()
-    result_bytes=await inference.infer(image_data, model, confidence)
+    async with request.app.state.inference_slots:
+        result_bytes = await asyncio.to_thread(inference.infer, image_data, model, confidence)
     elapsed_time = (perf_counter() - start_time)*1000
     return Response(content=result_bytes, media_type="image/jpeg", headers={"X-Processing-Time": f"{elapsed_time:.2f} ms",  "X-Model-Used": model_name.value})
 
